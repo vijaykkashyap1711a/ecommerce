@@ -244,7 +244,7 @@ resource "aws_db_instance" "postgres" {
 
 resource "aws_eks_access_entry" "local_admin" {
   cluster_name  = aws_eks_cluster.main.name
-  principal_arn = "arn:aws:iam::641094028852:user/user"
+  principal_arn = "arn:aws:iam::439536303054:user/user"
   type          = "STANDARD"
 }
 

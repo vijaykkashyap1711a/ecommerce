@@ -1,7 +1,7 @@
 const PRODUCT_SERVICE_URL = "http://localhost:5001";
 const ORDER_SERVICE_URL = "http://localhost:5003";
 
-const API_TOKEN ="new token ";
+const API_TOKEN ="my-demo-token";
 
 
 const authHeaders = {
@@ -165,6 +165,11 @@ window.addEventListener(
         loadProducts();
 
         loadOrders();
+
+        setInterval(() => {
+          loadProducts();
+          loadOrders();
+        }, 4000);
 
     }
 );

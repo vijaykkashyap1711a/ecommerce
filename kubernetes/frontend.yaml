@@ -18,6 +18,9 @@ spec:
           image: REPLACE_WITH_ECR_FRONTEND_IMAGE
           ports:
             - containerPort: 5500
+          env:
+            - name: PORT
+              value: "5500"  
           readinessProbe:
             httpGet:
               path: /

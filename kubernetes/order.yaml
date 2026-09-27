@@ -19,6 +19,8 @@ spec:
           ports:
             - containerPort: 5003
           env:
+            - name: PORT
+              value: "5003"
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:

@@ -1,4 +1,10 @@
 terraform {
+  backend "s3" {
+    bucket       = "vijay-ecommerce-tf-state-439536303054"
+    key          = "ecommerce/terraform.tfstate"
+    region       = "ap-south-1"
+    use_lockfile = true
+  }
   required_version = ">= 1.6.0"
 
   required_providers {

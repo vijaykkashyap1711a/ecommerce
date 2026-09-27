@@ -10,6 +10,13 @@ spec:
     name: product
   minReplicas: 1
   maxReplicas: 3
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
   metrics:
     - type: Resource
       resource:
@@ -30,6 +37,13 @@ spec:
     name: order
   minReplicas: 1
   maxReplicas: 3
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
   metrics:
     - type: Resource
       resource:

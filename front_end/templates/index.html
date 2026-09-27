@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>E-Commerce Dashboard</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='styles.css') }}">
+
+</head>
+
+<body>
+
+    <header>
+
+        <h1>E-Commerce Dashboard</h1>
+
+        <p>Flask + PostgreSQL + Microservices</p>
+
+    </header>
+
+
+    <main>
+
+        <!-- USERS -->
+
+        <section>
+
+            <h2>Users</h2>
+
+            <button onclick="loadUsers()">
+                Refresh Users
+            </button>
+
+            <div id="users">
+                Loading users...
+            </div>
+
+        </section>
+
+
+        <!-- PRODUCTS -->
+
+        <section>
+
+            <h2>Products</h2>
+
+            <button onclick="loadProducts()">
+                Refresh Products
+            </button>
+
+            <div id="products">
+                Loading products...
+            </div>
+
+        </section>
+
+
+        <!-- ORDERS -->
+
+        <section>
+
+            <h2>Orders</h2>
+
+            <button onclick="loadOrders()">
+                Refresh Orders
+            </button>
+
+            <div id="orders">
+                Loading orders...
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+
+</body>
+
+</html>

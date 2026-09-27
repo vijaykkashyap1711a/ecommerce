@@ -196,16 +196,33 @@ For this demo, CloudWatch log retention should be kept low, for example 7 days, 
 * The RDS database is private.
 * Kubernetes resources are isolated in the `ecommerce` namespace.
 * API requests use bearer-token authentication.
+ 
+## Current application limitation
 
-## Current limitations / next steps
+- `DELETE /orders/{id}` is not implemented yet. The endpoint currently returns `405 Method Not Allowed`
 
-* `DELETE /orders/{id}` is not implemented yet and returns `405 Method Not Allowed`.
-* Application logs are currently basic Gunicorn logs. Structured JSON logs with request IDs would make troubleshooting easier.
-* Add CloudWatch alarms for high CPU, repeated pod restarts, and RDS health.
-* Enable EKS control-plane logs such as API server, Audit, and Authenticator for deeper Kubernetes troubleshooting.
-* Add unit tests, integration tests, image scanning, and code-quality checks to the CI pipeline.
-* Keep separate development, staging, and production environments for a production setup.
+## Future DevOps improvements
 
+1. **Terraform state and deployment safety**  
+   Create the Terraform backend through a separate bootstrap module, enable state versioning and locking, require plan approval before production changes, and run scheduled drift detection.
+
+2. **Pod and node autoscaling**  
+   HPA currently scales Product and Order Pods based on CPU usage. Add Karpenter or Cluster Autoscaler so EKS automatically adds worker nodes when Pods cannot be scheduled because existing nodes lack capacity, and removes unused nodes when demand decreases.
+
+3. **Monitoring and alerting**  
+   CloudWatch Container Insights is enabled for logs and infrastructure metrics. Next, add Prometheus and Grafana for application-level dashboards, structured JSON logs with request IDs, EKS control-plane logs, and alerts for high CPU, pod restart failures, and RDS health.
+
+4. **Security hardening**  
+   Move worker nodes to private subnets, use AWS Secrets Manager with External Secrets instead of manually managed Kubernetes secrets, add image vulnerability scanning such as Trivy, and extend least-privilege EKS Pod Identity roles to application workloads.
+
+5. **High availability and recovery**  
+   Enable Multi-AZ RDS, longer backup retention, deletion protection for production, Pod Disruption Budgets, and topology-spread rules so replicas remain available across Availability Zones.
+
+6. **Safer deployments**  
+   Introduce separate development, staging, and production environments; require approval before production deployment; implement rollback procedures; and later adopt GitOps deployment management with Argo CD.
+
+7. **Cost management and cleanup**  
+   Add AWS Budgets and billing alerts, cost-allocation tags, ECR image-retention policies, rightsizing reviews using metrics, and a manually approved Terraform destroy workflow for non-production environments.
 ## What was demonstrated
 
 * Application access through an AWS Load Balancer

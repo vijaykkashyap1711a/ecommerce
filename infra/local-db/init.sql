@@ -1,0 +1,2 @@
+CREATE DATABASE ecommerce_product_db;
+CREATE DATABASE ecommerce_order_db;

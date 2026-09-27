@@ -1,0 +1,120 @@
+name: Application CI/CD
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  CLUSTER_NAME: ecommerce-demo
+  PROJECT_NAME: ecommerce-demo
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test containers locally
+        run: |
+          cp .env.example .env
+          docker compose up -d --build
+          sleep 20
+
+          curl -f http://localhost:5001/health
+          curl -f http://localhost:5003/health
+          curl -f http://localhost:5500/
+
+      - name: Stop test containers
+        if: always()
+        run: docker compose down -v
+
+      - name: Connect to AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push images
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          TAG=${GITHUB_SHA::7}
+
+          docker build --build-arg SERVICE_DIR=front_end \
+            -t $REGISTRY/$PROJECT_NAME-frontend:$TAG .
+          docker push $REGISTRY/$PROJECT_NAME-frontend:$TAG
+
+          docker build --build-arg SERVICE_DIR=product_services \
+            -t $REGISTRY/$PROJECT_NAME-product:$TAG .
+          docker push $REGISTRY/$PROJECT_NAME-product:$TAG
+
+          docker build --build-arg SERVICE_DIR=order_service \
+            -t $REGISTRY/$PROJECT_NAME-order:$TAG .
+          docker push $REGISTRY/$PROJECT_NAME-order:$TAG
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: latest
+
+      - name: Connect to EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $CLUSTER_NAME
+
+      - name: Create Kubernetes secret
+        env:
+          DB_PASSWORD: ${{ secrets.TF_VAR_db_password }}
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+        run: |
+          RDS_HOST=$(aws rds describe-db-instances \
+            --db-instance-identifier ecommerce-demo-postgres \
+            --query "DBInstances[0].Endpoint.Address" \
+            --output text)
+
+          DB_URL="postgresql+psycopg2://app:${DB_PASSWORD}@${RDS_HOST}:5432/ecommerce"
+
+          kubectl apply -f kubernetes/namespace.yaml
+
+          kubectl create secret generic ecommerce-secrets \
+            -n ecommerce \
+            --from-literal=PRODUCT_DATABASE_URL="$DB_URL" \
+            --from-literal=ORDER_DATABASE_URL="$DB_URL" \
+            --from-literal=API_TOKEN="$API_TOKEN" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy application
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          TAG=${GITHUB_SHA::7}
+
+          kubectl apply -f kubernetes/configmap.yaml
+          kubectl apply -f kubernetes/product.yaml
+          kubectl apply -f kubernetes/order.yaml
+          kubectl apply -f kubernetes/frontend.yaml
+          kubectl apply -f kubernetes/hpa.yaml
+          kubectl apply -f kubernetes/ingress.yaml
+
+          kubectl set image deployment/product \
+            product=$REGISTRY/$PROJECT_NAME-product:$TAG -n ecommerce
+
+          kubectl set image deployment/order \
+            order=$REGISTRY/$PROJECT_NAME-order:$TAG -n ecommerce
+
+          kubectl set image deployment/frontend \
+            frontend=$REGISTRY/$PROJECT_NAME-frontend:$TAG -n ecommerce
+
+          kubectl rollout status deployment/product -n ecommerce
+          kubectl rollout status deployment/order -n ecommerce
+          kubectl rollout status deployment/frontend -n ecommerce

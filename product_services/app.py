@@ -3,10 +3,12 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from functools import wraps
 import os
+from flask_cors import CORS
 
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False

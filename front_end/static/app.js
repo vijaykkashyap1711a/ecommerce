@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:5000";
+const PRODUCT_SERVICE_URL = "http://localhost:5001";
+const ORDER_SERVICE_URL = "http://localhost:5003";
 
 const API_TOKEN ="new token ";
 
@@ -10,69 +11,12 @@ const authHeaders = {
 
 
 
-async function loadUsers() {
-
-    try {
-
-        const response = await fetch(
-            `${API_URL}/users`
-        );
-
-        const users = await response.json();
-
-        const container =
-            document.getElementById("users");
-
-        container.innerHTML = "";
-
-        if (!Array.isArray(users)) {
-
-            container.innerHTML =
-                `<p>Error: ${users.error}</p>`;
-
-            return;
-        }
-
-        if (users.length === 0) {
-
-            container.innerHTML =
-                "<p>No users found.</p>";
-
-            return;
-        }
-
-        users.forEach(user => {
-
-            container.innerHTML += `
-                <div class="card">
-
-                    <h3>${user.name}</h3>
-
-                    <p>ID: ${user.id}</p>
-
-                    <p>Email: ${user.email}</p>
-
-                </div>
-            `;
-
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        document.getElementById("users").innerHTML =
-            "<p>Unable to load users.</p>";
-    }
-}
-
-
 async function loadProducts() {
 
     try {
 
         const response = await fetch(
-            `${API_URL}/products`
+            `${PRODUCT_SERVICE_URL}/products`
         );
 
         const products = await response.json();
@@ -135,7 +79,7 @@ async function loadOrders() {
     try {
 
         const response = await fetch(
-            `${API_URL}/orders`,
+            `${ORDER_SERVICE_URL}/orders`,
             {
                 method: "GET",
                 headers: authHeaders
@@ -183,10 +127,6 @@ async function loadOrders() {
                     </h3>
 
                     <p>
-                        User ID: ${order.user_id}
-                    </p>
-
-                    <p>
                         Product ID: ${order.product_id}
                     </p>
 
@@ -221,8 +161,6 @@ async function loadOrders() {
 window.addEventListener(
     "DOMContentLoaded",
     function () {
-
-        loadUsers();
 
         loadProducts();
 

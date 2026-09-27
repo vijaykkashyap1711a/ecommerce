@@ -4,10 +4,13 @@ from dotenv import load_dotenv
 from functools import wraps
 import requests
 import os
+from flask_cors import CORS
+from sqlalchemy import text
 
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -16,7 +19,6 @@ db = SQLAlchemy(app)
 
 API_TOKEN = os.getenv("API_TOKEN")
 
-USER_SERVICE_URL = os.getenv("USER_SERVICE_URL")
 PRODUCT_SERVICE_URL = os.getenv("PRODUCT_SERVICE_URL")
 
 
@@ -25,11 +27,6 @@ class Order(db.Model):
     __tablename__ = "orders"
 
     id = db.Column(db.Integer, primary_key=True)
-
-    user_id = db.Column(
-        db.Integer,
-        nullable=False
-    )
 
     product_id = db.Column(
         db.Integer,
@@ -56,7 +53,6 @@ class Order(db.Model):
 
         return {
             "id": self.id,
-            "user_id": self.user_id,
             "product_id": self.product_id,
             "quantity": self.quantity,
             "total_price": float(self.total_price),
@@ -103,13 +99,12 @@ def create_order():
             "error": "JSON body required"
         }), 400
 
-    user_id = data.get("user_id")
     product_id = data.get("product_id")
     quantity = data.get("quantity")
 
-    if not user_id or not product_id or not quantity:
+    if not product_id or not quantity:
         return jsonify({
-            "error": "user_id, product_id and quantity are required"
+            "error": "product_id and quantity are required"
         }), 400
 
     if quantity <= 0:
@@ -119,30 +114,6 @@ def create_order():
 
 
 
-    try:
-
-        user_response = requests.get(
-            f"{USER_SERVICE_URL}/users/{user_id}",
-            timeout=5
-        )
-
-    except requests.RequestException:
-
-        return jsonify({
-            "error": "User service unavailable"
-        }), 503
-
-    if user_response.status_code == 404:
-
-        return jsonify({
-            "error": "User does not exist"
-        }), 404
-
-    if user_response.status_code != 200:
-
-        return jsonify({
-            "error": "Unable to validate user"
-        }), 503
     try:
 
         product_response = requests.get(
@@ -208,7 +179,6 @@ def create_order():
     # -----------------------------
 
     order = Order(
-        user_id=user_id,
         product_id=product_id,
         quantity=quantity,
         total_price=total_price,
@@ -258,6 +228,10 @@ def health():
 
 with app.app_context():
     db.create_all()
+    db.session.execute(
+        text("ALTER TABLE orders DROP COLUMN IF EXISTS user_id")
+    )
+    db.session.commit()
 
 
 if __name__ == "__main__":

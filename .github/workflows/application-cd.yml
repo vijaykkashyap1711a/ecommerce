@@ -72,6 +72,12 @@ jobs:
             --region $AWS_REGION \
             --name $CLUSTER_NAME
 
+      - name: Wait for AWS Load Balancer Controller
+        run: |
+          kubectl rollout status deployment/aws-load-balancer-controller \
+            -n kube-system \
+            --timeout=5m    
+
       - name: Create Kubernetes secret
         env:
           DB_PASSWORD: ${{ secrets.TF_VAR_db_password }}

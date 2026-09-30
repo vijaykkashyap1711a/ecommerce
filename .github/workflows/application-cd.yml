@@ -46,7 +46,7 @@ jobs:
           curl -f http://localhost:5500/
       - name: Run local integration tests
         run: |
-          python -m pytest -q -s tests/integration_test_local.py
+          python -m pytest -q -s tests/integration_test.py
 
       - name: Stop test containers
         if: always()

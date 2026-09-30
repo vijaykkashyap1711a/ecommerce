@@ -35,6 +35,18 @@ jobs:
             tests/product_unit_test.py \
             tests/order_unit_test.py
 
+      - name: SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.sources=front_end,product_services,order_service
+            -Dsonar.tests=tests
+            -Dsonar.exclusions=**/__pycache__/**,**/.venv/**,**/.test-venv/**
+            
       - name: Test containers locally
         run: |
           cp .env.example .env
